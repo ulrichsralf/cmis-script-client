@@ -3,6 +3,7 @@
  */
 package scripts
 
+import de.mc.cmis.client.util.RandomInputStream
 import org.apache.chemistry.opencmis.commons.*
 import org.apache.chemistry.opencmis.commons.enums.*
 import org.apache.chemistry.opencmis.client.api.*
@@ -214,6 +215,22 @@ class CMIS {
         def stream = new ByteArrayInputStream(content.bytes)
 
         def contentStream = session.objectFactory.createContentStream(name, content.bytes.length, "text/plain", stream)
+
+        parentFolder.createDocument(properties, contentStream, versioningState)
+    }
+
+     Document createRandomContentDocument(parent, String name, Long length, String type = "cmis:document",
+            VersioningState versioningState = VersioningState.MAJOR) {
+        CmisObject parentFolder = getFolder(parent)
+
+        def properties = [
+            (PropertyIds.OBJECT_TYPE_ID): type,
+            (PropertyIds.NAME): name
+        ]
+
+        def stream = new RandomInputStream(length)
+
+        def contentStream = session.objectFactory.createContentStream(name, length, "text/plain", stream)
 
         parentFolder.createDocument(properties, contentStream, versioningState)
     }

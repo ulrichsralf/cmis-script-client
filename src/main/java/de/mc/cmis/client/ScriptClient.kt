@@ -3,13 +3,17 @@
  */
 package de.mc.cmis.client
 
+import org.apache.chemistry.opencmis.client.api.Session
 import org.apache.chemistry.opencmis.client.runtime.SessionFactoryImpl
 import org.apache.chemistry.opencmis.commons.SessionParameter
 import org.apache.chemistry.opencmis.commons.enums.BindingType
 import java.io.InputStreamReader
 import java.io.PrintWriter
+import java.util.Date
 import java.util.HashMap
 import java.util.Properties
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngineManager
 
 public class ScriptClient {
@@ -32,24 +36,40 @@ public class ScriptClient {
             parameter.put(SessionParameter.COMPRESSION, "true")
             parameter.put(SessionParameter.REPOSITORY_ID, props.getProperty("cmisrepo"))
 
-            val session = sessionFactory.createSession(parameter)
 
-            val stream = ScriptClient.javaClass.getResourceAsStream("/scripts/" + props.getProperty("script") + ".groovy")
-            val reader = InputStreamReader(stream)
-            val out = PrintWriter(System.out)
-            val err = PrintWriter(System.err)
-            val mgr = ScriptEngineManager()
-            val engine = mgr.getEngineByExtension("groovy")
-            engine.getContext().setWriter(out)
-            engine.getContext().setErrorWriter(err)
-            engine.put("session", session)
-            engine.put("binding", session.getBinding())
-            engine.put("out", PrintWriter(out))
-            engine.eval(reader)
+            val script = props.getProperty("script")
+            val threads= props.getProperty("threads").toInt()
 
-            println("client finished")
+            val es = Executors.newFixedThreadPool(threads)
+
+            IntRange(1,threads).forEach { i ->
+                es execute  {
+                    println("${Date()} start thread $i")
+                    val session = sessionFactory.createSession(HashMap(parameter))
+                    val stream = ScriptClient.javaClass.getResourceAsStream("/scripts/${script}.groovy")
+                    val reader = InputStreamReader(stream)
+                    val out = PrintWriter(System.out)
+                    val err = PrintWriter(System.err)
+                    val mgr = ScriptEngineManager()
+                    val engine = mgr.getEngineByExtension("groovy")
+                    engine.getContext().setWriter(out)
+                    engine.getContext().setErrorWriter(err)
+                    engine.put("index", i)
+                    engine.put("session", session)
+                    engine.put("binding", session.getBinding())
+                    engine.put("out", PrintWriter(out))
+                    engine.eval(reader)
+                    println("finished thread $i")
+                }
+            }
+
+            es.shutdown()
+            es.awaitTermination(10, TimeUnit.DAYS)
+
+            println("${Date()} client finished")
         }
     }
 }
+
 
 fun main(args: Array<String>) = ScriptClient.main(args)
