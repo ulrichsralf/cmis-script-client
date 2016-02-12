@@ -3,15 +3,12 @@
  */
 package de.mc.cmis.client
 
-import org.apache.chemistry.opencmis.client.api.Session
 import org.apache.chemistry.opencmis.client.runtime.SessionFactoryImpl
 import org.apache.chemistry.opencmis.commons.SessionParameter
 import org.apache.chemistry.opencmis.commons.enums.BindingType
 import java.io.InputStreamReader
 import java.io.PrintWriter
-import java.util.Date
-import java.util.HashMap
-import java.util.Properties
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngineManager
@@ -43,7 +40,7 @@ public class ScriptClient {
             val es = Executors.newFixedThreadPool(threads)
 
             IntRange(1,threads).forEach { i ->
-                es execute  {
+                es.execute  {
                     println("${Date()} start thread $i")
                     val session = sessionFactory.createSession(HashMap(parameter))
                     val stream = ScriptClient.javaClass.getResourceAsStream("/scripts/${script}.groovy")

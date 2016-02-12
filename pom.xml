@@ -30,7 +30,7 @@
     <properties>
         <opencmis.version>0.13.0</opencmis.version>
         <slf4j.version>1.7.7</slf4j.version>
-        <kotlin.version>0.11.91</kotlin.version>
+        <kotlin.version>1.0.0-rc-1036</kotlin.version>
     </properties>
 
     <build>
